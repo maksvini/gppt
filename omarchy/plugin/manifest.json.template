@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "__PLUGIN_ID__",
+  "name": "Discord Push-to-Talk",
+  "version": "1.0.0",
+  "author": "__AUTHOR__",
+  "license": "MIT",
+  "description": "Mic mute/unmute indicator and control for the discord-ptt evdev daemon",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Discord PTT",
+    "description": "Mic mute/unmute indicator, service toggle, and PTT key info",
+    "category": "Audio",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

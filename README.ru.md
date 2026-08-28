@@ -2,6 +2,8 @@
 
 *English: [README.md](README.md)*
 
+Не на GNOME? Смотри [OMARCHY.ru.md](OMARCHY.ru.md) — установка как systemd-сервис + виджет в баре Quickshell для Omarchy/Hyprland.
+
 Расширение для **GNOME Shell 45–50**: пока клавиша **не** зажата, захват микрофона в Discord / Vesktop принудительно **заглушается** на стороне PipeWire/PulseAudio; при удержании клавиши — **размучивается**. Работает на **Wayland** за счёт чтения событий из **evdev** (`/dev/input/*`), а не через X11/Wayland-клиент.
 
 **UUID расширения:** `discord-ptt@vimax.example.com`

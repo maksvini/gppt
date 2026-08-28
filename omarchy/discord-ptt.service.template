@@ -1,0 +1,17 @@
+[Unit]
+Description=Discord push-to-talk (evdev + PipeWire)
+PartOf=graphical-session.target
+Requires=graphical-session.target
+After=graphical-session.target pipewire-pulse.socket
+ConditionEnvironment=WAYLAND_DISPLAY
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/discord-ptt/env
+ExecStart=__PYTHON__ __DAEMON__ --key ${PTT_KEY} --sound-on __SOUND_ON__ --sound-off __SOUND_OFF__ --state-file %h/.local/state/discord-ptt/state.json $PTT_EXTRA_ARGS
+Restart=on-failure
+RestartSec=2
+Slice=session.slice
+
+[Install]
+WantedBy=graphical-session.target

@@ -2,6 +2,8 @@
 
 *Русский: [README.ru.md](README.ru.md)*
 
+Not on GNOME? See [OMARCHY.md](OMARCHY.md) for a systemd-service + Quickshell-bar-widget setup on Omarchy/Hyprland.
+
 A **GNOME Shell 45–50** extension: while the key is **not** held, Discord / Vesktop microphone capture is forced **muted** via PipeWire/PulseAudio; while you hold the key, it is **unmuted**. Works on **Wayland** by reading **evdev** events from `/dev/input/*`, not through an X11/Wayland grab.
 
 **Extension UUID:** `discord-ptt@vimax.example.com`

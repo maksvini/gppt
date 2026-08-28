@@ -22,6 +22,7 @@ import os
 import signal
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 try:
@@ -132,6 +133,26 @@ def apply_mute_to_outputs(ids: list[int], muted: bool) -> bool:
     return ok
 
 # ─────────────────────────────────────────────────────────────────────────────
+# State file (consumed by e.g. a bar-widget indicator; optional, no-op if unset)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class StateWriter:
+    def __init__(self, path: str | None) -> None:
+        self.path = Path(path) if path else None
+        if self.path:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+
+    def write(self, **fields) -> None:
+        if not self.path:
+            return
+        try:
+            tmp = self.path.with_suffix(self.path.suffix + '.tmp')
+            tmp.write_text(json.dumps(fields))
+            os.replace(tmp, self.path)
+        except OSError as e:
+            log.debug('State file write failed: %s', e)
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Push-to-Talk controller
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -142,10 +163,14 @@ class PushToTalkController:
     """
 
     def __init__(self, ptt_keycode: int, sound_on: str | None,
-                 sound_off: str | None, sound_enabled: bool) -> None:
+                 sound_off: str | None, sound_enabled: bool,
+                 state_file: str | None = None) -> None:
         self.ptt_keycode = ptt_keycode
+        self.sound_enabled = sound_enabled
         self.sound_on    = sound_on  if sound_enabled and sound_on  and Path(sound_on).exists()  else None
         self.sound_off   = sound_off if sound_enabled and sound_off and Path(sound_off).exists() else None
+        self._state = StateWriter(state_file)
+        self._heartbeat_counter = 0
 
         if sound_enabled:
             if sound_on  and not self.sound_on:  log.warning('Sound file not found: %s', sound_on)
@@ -160,6 +185,18 @@ class PushToTalkController:
         self._mute_lock: asyncio.Lock | None = None
         self._opened_paths: set[str] = set()
         self._device_tasks: set[asyncio.Task] = set()
+
+    def _write_state(self, service: str) -> None:
+        holding = bool(self._devices_holding)
+        self._state.write(
+            schema=1,
+            service=service,
+            holding=holding,
+            muted=not holding,
+            keycode=self.ptt_keycode,
+            sound_enabled=self.sound_enabled,
+            ts=time.time(),
+        )
 
     def _spawn_listener(self, device: evdev.InputDevice) -> None:
         path = device.path
@@ -232,6 +269,10 @@ class PushToTalkController:
                         await asyncio.to_thread(self._apply_mute_worker, False)
                     else:
                         await asyncio.to_thread(self._idle_mute_enforce)
+                self._heartbeat_counter += 1
+                if self._heartbeat_counter >= 5:
+                    self._heartbeat_counter = 0
+                    self._write_state('up')
         except asyncio.CancelledError:
             raise
 
@@ -284,6 +325,8 @@ class PushToTalkController:
             self._hotplug_task.cancel()
         for oid in find_discord_source_outputs():
             set_mute(oid, False)
+        self._devices_holding.clear()
+        self._write_state('down')
 
         if self._loop and self._loop.is_running():
             self._loop.stop()
@@ -297,6 +340,7 @@ class PushToTalkController:
             loop = asyncio.get_running_loop()
             loop.create_task(self._play_sound(self.sound_on))
             loop.create_task(self._apply_mute_async(False))
+            self._write_state('up')
 
     def _ptt_release(self, path: str, name: str, play_sound: bool) -> None:
         if path not in self._devices_holding:
@@ -308,6 +352,7 @@ class PushToTalkController:
             loop.create_task(self._apply_mute_async(True))
             if play_sound:
                 loop.create_task(self._play_sound(self.sound_off))
+            self._write_state('up')
 
     async def _listen_device(self, device: evdev.InputDevice) -> None:
         path = device.path
@@ -371,6 +416,7 @@ class PushToTalkController:
                  self.ptt_keycode, len(opened), skipped, HOTPLUG_SCAN_INTERVAL_SEC)
 
         await self._apply_mute_async(True)
+        self._write_state('up')
 
         self._guard_task = asyncio.create_task(self._idle_mute_guard())
         self._hotplug_task = asyncio.create_task(self._hotplug_loop())
@@ -416,6 +462,8 @@ def main() -> None:
                         help='WAV file to play on PTT key release')
     parser.add_argument('--no-sound', action='store_true',
                         help='Disable all PTT click sounds')
+    parser.add_argument('--state-file', metavar='PATH', default=None,
+                        help='Write live JSON state to this path (for UI indicators)')
     parser.add_argument('--verbose', '-v', action='store_true',
                         help='Enable verbose (DEBUG) logging')
     args = parser.parse_args()
@@ -431,6 +479,7 @@ def main() -> None:
         sound_on=args.sound_on,
         sound_off=args.sound_off,
         sound_enabled=not args.no_sound,
+        state_file=args.state_file,
     )
 
     loop = asyncio.new_event_loop()

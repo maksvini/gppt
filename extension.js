@@ -193,7 +193,10 @@ const DiscordPttIndicator = GObject.registerClass(
 export default class DiscordPttExtension extends Extension {
     enable() {
         this._indicator = new DiscordPttIndicator(this);
-        Main.panel.addToStatusArea(this.uuid, this._indicator);
+        // right before the keyboard layout indicator, so the own widgets sit together next to "en"
+        const kbd = Main.panel.statusArea.keyboard?.container;
+        const pos = kbd ? Main.panel._rightBox.get_children().indexOf(kbd) : -1;
+        Main.panel.addToStatusArea(this.uuid, this._indicator, pos >= 0 ? pos : 0, 'right');
     }
 
     disable() {

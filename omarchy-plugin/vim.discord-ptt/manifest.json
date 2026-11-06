@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "vim.discord-ptt",
+  "name": "Discord Push-to-Talk",
+  "version": "1.0.0",
+  "author": "vim",
+  "description": "Hold a key to unmute Discord / Vesktop microphone capture (evdev + pactl)",
+  "kinds": [
+    "service",
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "service": "Service.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Discord Push-to-Talk",
+    "description": "PTT toggle, right-click for key settings",
+    "category": "Media",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

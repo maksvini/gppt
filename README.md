@@ -148,6 +148,22 @@ python3 ~/.local/share/gnome-shell/extensions/discord-ptt@vimax.example.com/daem
 
 ---
 
+## Omarchy (Hyprland) bar plugin
+
+The same daemon also runs as an Omarchy 4.x shell plugin, `vim.discord-ptt`
+(bar icon: left click toggles PTT, right click opens key and sound settings).
+Its QML and key-capture helper live in `omarchy-plugin/vim.discord-ptt/`; the
+installer adds the shared `daemon/discord_ptt.py` and `sounds/`:
+
+```bash
+sudo pacman -S --needed python-evdev
+sudo usermod -aG input "$USER"   # then log out and back in
+./omarchy-plugin/install.sh      # --remove to uninstall
+```
+
+Settings are stored in `~/.config/omarchy/discord-ptt.json` (`keyCode` is a raw
+evdev code, e.g. 189 = KEY_F19).
+
 ## Limitations
 
 - Voice streams are detected from PipeWire properties (`application.name`, binary path, etc.). Unusual builds or other clients may need tweaks in `daemon/discord_ptt.py`.

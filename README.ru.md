@@ -148,6 +148,23 @@ python3 ~/.local/share/gnome-shell/extensions/discord-ptt@vimax.example.com/daem
 
 ---
 
+## Плагин бара Omarchy (Hyprland)
+
+Тот же демон работает и как плагин оболочки Omarchy 4.x, `vim.discord-ptt`
+(значок в баре: левый клик включает и выключает PTT, правый открывает настройки
+клавиши и звука). QML и помощник захвата клавиши лежат в
+`omarchy-plugin/vim.discord-ptt/`, а установщик добавляет общие `daemon/discord_ptt.py`
+и `sounds/`:
+
+```bash
+sudo pacman -S --needed python-evdev
+sudo usermod -aG input "$USER"   # затем выйти и снова войти
+./omarchy-plugin/install.sh      # --remove — удалить
+```
+
+Настройки хранятся в `~/.config/omarchy/discord-ptt.json` (`keyCode` — код evdev,
+например 189 = KEY_F19).
+
 ## Ограничения
 
 - Определение «голосового» потока Discord идёт по свойствам PipeWire (`application.name`, путь к бинарнику и т.д.). Экзотические сборки или другие клиенты могут потребовать доработки списка в `daemon/discord_ptt.py`.
